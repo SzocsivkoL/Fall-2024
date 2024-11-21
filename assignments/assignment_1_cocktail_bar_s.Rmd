@@ -1,4 +1,7 @@
 ---
+library(dplyr)   
+library(tidyr)
+
 title: "Assignment 1: The cocktail bar (data transformation and manipulation)"
 author: "Tamas Nagy"
 output: html_document
@@ -33,6 +36,10 @@ Read the cocktail dataset from: <https://github.com/nthun/cocktail-balance> You 
 
 ```{r}
 
+dataset_url <- "https://raw.githubusercontent.com/nthun/cocktail-balance/master/cocktail_data.tsv"
+
+cocktail_dataset <- read.delim(dataset_url)
+
 ```
 
 ## 2. Transform the data table and clean the ingredient variable!
@@ -40,9 +47,12 @@ Read the cocktail dataset from: <https://github.com/nthun/cocktail-balance> You 
 The ingredients are currently in a single cell for each cocktail. It would be better to put them in separate rows. Also, the variable should be cleaned of all quantities (e.g. 1/2 oz, 2 dashes, etc.), and the indicator of alcohol content (e.g. 47.3% abv). You will need to use this cleaned table in later tasks.
 
 ```{r}
-
+cocktailbar<- cocktail_dataset %>%
+  separate_rows (ingredients, sep = "<br/>|<br>|<b4/>")
 ```
-
+cocktailbar$ingredients <- gsub('[0-9.]|oz|%abv', '', cocktailbar$ingredients)
+cocktailbar$ingredients <- trimws(cocktailbar$ingredients)
+df
 ## 3. All ingredients in alphabetical order
 
 Before opening the bar, you need to find a reliable supplier that has all the ingredients. You need to send a list of all possible ingredients you will need. They don't need the quantities (i.e. how many of these are needed), just the names of the ingredients.
