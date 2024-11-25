@@ -1,9 +1,7 @@
 
 
-install.packages("dplyr")
-library(dplyr)   
-library(tidyr)
 
+---
 title: "Assignment 1: The cocktail bar (data transformation and manipulation)"
 author: "Tamas Nagy"
 output: html_document
@@ -11,6 +9,9 @@ editor_options:
   chunk_output_type: console
 ---
 
+install.packages("dplyr")
+library(dplyr)   
+library(tidyr)
 # Skills needed to solve this assignment
 
 -   Using R and RStudio, reading data
@@ -19,9 +20,7 @@ editor_options:
 -   Data manipulation (e.g. dplyr, tidyr)
 -   String manipulation (e.g. stringr)
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
+```
 ```
 
 # Background
