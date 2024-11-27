@@ -12,6 +12,7 @@ editor_options:
 install.packages("dplyr")
 library(dplyr)   
 library(tidyr)
+library(tidyverse)
 # Skills needed to solve this assignment
 
 -   Using R and RStudio, reading data
@@ -51,7 +52,7 @@ The ingredients are currently in a single cell for each cocktail. It would be be
 cocktailbar <- cocktail_dataset %>%
   separate_rows(ingredients, sep = "<br/>|<br>|<b4/>") 
 
-cocktailbar$ingredients <- gsub('[0-9.]|oz|%abv|abv|\\(|\\)|/|% ', '', cocktailbar$ingredients)
+cocktailbar$ingredients <- gsub('[0-9.]|oz|%abv|abv|\\(|\\)|/|%|dash|dashes|drops|bsp', '', cocktailbar$ingredients)
 cocktailbar$ingredients <- trimws(cocktailbar$ingredients)
 ```
 ## 3. All ingredients in alphabetical order
