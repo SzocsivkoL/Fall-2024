@@ -18,7 +18,6 @@ You will have to create 3 plots based on the datasets and instructions detailed 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-install.packages("RColorBrewer")
 library(RColorBrewer)
 library(tidyverse)
 library(tidytuesdayR)
@@ -120,40 +119,32 @@ Notes:
 -   First you have to aggregate the data to count all commutes by state.
 -   Both axis scales are log transformed and the labels comma formatted, using `scales::comma_format()`
 -   The point size is 2, . The theme is set to light.
-
 ```{r}
-library(scales)
-
 # Load the dataset
 tuesday_data <- tt_load("2019-11-05")
 commute <- tuesday_data$commute
 
-# Filter the data 
+# Filter the data to include only Bike and Walk modes
 commute_filtered <- commute %>%
   filter(mode %in% c("Bike", "Walk"))
 
-# Aggregate data to compute total commutes by state and mode
-commute_aggregated <- commute_filtered %>%
-  group_by(state, mode) %>%
-  summarise(total_commutes = sum(n, na.rm = TRUE), .groups = "drop")
+# Reshape the data: Create separate columns for Bike and Walk commute counts
+commute_reshaped <- commute_filtered %>%
+  group_by(state, mode, state_abb,state_region) %>%
+  summarise(total_commutes = sum(n, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = mode, values_from = total_commutes, values_fill = 0) 
 
 
 # Create the scatter plot
-ggplot(commute_filtered, aes(x = Walk, y = Bike, color=state.region)) +
+ggplot(commute_reshaped, aes(x = Walk, y = Bike, color = state_region)) +
   geom_point(size = 2) +             
   scale_x_log10(labels = comma_format()) +             
   scale_y_log10(labels = comma_format()) + 
-  geom_text (aes(label = state_abb), hjust = 0.5, vjust = 0.5, size = 3, check_overlap = TRUE, color = "black")
+  geom_text(aes(label = state_abb), hjust = 0.5, vjust = 0.5, size = 3, check_overlap = TRUE, color = "black") +
   theme_light() +                        
   labs(
-    title = "Commutes by Bike and Walk in US Cities",   
-    x = "Total Bike Commutes (log scale)",             
-    y = "Total Walk Commutes (log scale)"     
-    
+    title = "Number of people walking vs. biking to work in each USA state",   
+    x = "Number of ppl walking to work (log N)",             
+    y = "Number of ppl biking to work (log N)"
   )
-
-
-
-
-
 ```

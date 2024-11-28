@@ -59,6 +59,28 @@ In your discussion of the findings, briefly interpret the results of the above a
 Read the dataset used in this assignment. Pay attention to the extension of the datafile.
 
 ```{r}
+# Install and load the required package
+install.packages("readxl")
+
+library(readxl)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+# Define the URL
+url <- "https://github.com/elte-ppk-r-course/Fall-2024/raw/refs/heads/main/data/assignment_3_dataset_.xlsx"
+
+# Temporary file for the dataset
+temp_file <- tempfile(fileext = ".xlsx")
+
+# Download the dataset
+download.file(url, temp_file, mode = "wb")
+
+# Read the Excel file
+data <- read_excel(temp_file)
+
+# View the data
+head(data)
 
 ```
 
@@ -69,6 +91,27 @@ Read the dataset used in this assignment. Pay attention to the extension of the 
 Run an exploratory data analysis (EDA) to investigate the dataset.
 
 ```{r}
+data %>% 
+  select_if(is.numeric) %>%  # Select numeric columns
+  gather() %>%
+  ggplot(aes(x=value)) + 
+  geom_histogram(bins = 30, fill = "green", alpha = 0.7) +
+  facet_wrap(~key, scales = "free_x") +
+  theme_minimal() +
+  labs(title = "Histograms of Numeric Variables")
+str(data)
+summary(data)
+table(data$sex)
+colSums(is.na(data))
+
+data %>%
+  pivot_longer(cols = where(is.numeric)) %>%  # Reshape the data to long format for numeric columns
+  ggplot(aes(x = value)) +
+  geom_boxplot() +
+  facet_wrap(~name, scales = "free") +  # Create a separate boxplot for each numeric variable
+  coord_flip() +
+  theme_minimal()
+
 
 ```
 
@@ -77,6 +120,9 @@ Run an exploratory data analysis (EDA) to investigate the dataset.
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
 
 ```{r}
+data <- data %>%
+  mutate(sex = recode(sex, "woman" = "female"))
+
 
 ```
 
@@ -87,6 +133,10 @@ In order to test the more complex model for outliers and to test the assumptions
 
 ```{r}
 
+model <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data)
+
+# Model summary
+summary(model)
 ```
 
 #### Checking for influential outliers
@@ -94,6 +144,32 @@ In order to test the more complex model for outliers and to test the assumptions
 Check for outlier values in the model.
 
 ```{r}
+# Cook's distance
+cooksd <- cooks.distance(model)
+plot(cooksd, type = "h", main = "Cook's Distance", col = "red")
+abline(h = 4/(nrow(data) - length(model$coefficients)), col = "blue")
+
+# Remove outliers if necessary
+influential <- as.numeric(names(cooksd)[(cooksd > (4/(nrow(data) - length(model$coefficients))))])
+data_clean <- data[-influential, ]
+
+plot(model, which = 5)  # Leverage plot in base R for linear model
+plot(model, which = 4) 
+
+model <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data)
+data_with_residuals <- data %>%
+  mutate(
+    cook_distance = cooks.distance(model)
+  )
+# Filter out the outlier in pain (pain == 50)
+data_filtered <- data %>% filter(pain != 50)
+
+# Fit the model without the outlier
+model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
+
+# Model summary
+summary(model_filtered)
+
 
 ```
 
@@ -102,18 +178,44 @@ Check for outlier values in the model.
 Check the normality assumption.
 
 ```{r}
+# Residual diagnostics
+qqnorm(residuals(model_filtered))
+qqline(residuals(model), col = "blue")
+
+# Shapiro-Wilk test
+shapiro.test(residuals(model_filtered))
+
+# Calculate the residuals from the model
+residuals_data <- residuals(model_filtered)
+
+# Quantile-quantile plot shows how far the residuals are from normal distribution
+qqplot_data <- qqnorm(residuals_data, plot.it = FALSE)
+
+# Find the points that are far from the line (deviating residuals)
+outlier_indices <- which(abs(qqplot_data$y) > 2)  # Set a threshold (e.g., abs > 2 standard deviations)
+
+# Show the corresponding rows of the outliers
+outliers <- data[outlier_indices, ]
+print(outliers)
 
 ```
 
 Check the linearity assumption.
 
 ```{r}
-
+car::crPlots(model_filtered)
 ```
 
 Check the homoscedasticty assumption (homogeneity of variance).
 
 ```{r}
+# Residuals vs Fitted
+plot(model_filtered$fitted.values, residuals(model_filtered), 
+     main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "red")
+
+# Breusch-Pagan test
+bptest(model_filtered)
 
 ```
 
@@ -126,9 +228,17 @@ https://statisticalhorizons.com/multicollinearity
 http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity-in-regression-analysis
 
 ```{r}
+# Variance Inflation Factor (VIF)
+car::vif(model_filtered)
 
-```
+data <- data %>%
+  mutate(cortisol_combined = (cortisol_serum + cortisol_saliva) / 2)
+  
+  model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_combined, data = data)
+summary(model_filtered)
+car::vif(model_filtered)
 
+ ``` 
 ### Making decision based on model diagnostics
 
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
