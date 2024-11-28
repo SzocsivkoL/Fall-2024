@@ -18,11 +18,13 @@ You will have to create 3 plots based on the datasets and instructions detailed 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+install.packages("RColorBrewer")
+library(RColorBrewer)
 library(tidyverse)
 library(tidytuesdayR)
 library(dplyr)   
 library(tidyr)
-install.packages("viridis")
+
 ```
 
 ## Task 1: Climbing expeditions
@@ -43,12 +45,16 @@ head(expeditions)
 expeditions$peak_name <- forcats::fct_lump(expeditions$peak_name, n = 15)
 
 # count of expeditions for each peak
+expeditions <- expeditions %>% filter (peak_name != "Other")
+
+sum(is.na(expeditions))
+
 expeditions$peak_name <- forcats::fct_reorder(expeditions$peak_name, expeditions$year, sum)
 
 # Create the plot 
 library(viridis) 
-ggplot(expeditions, aes(x = peak_name)) + 
-  geom_bar(aes(fill = peak_name), show.legend = FALSE) +  
+ggplot(expeditions, aes(x = peak_name, fill = season)) + 
+  geom_bar() +  
   scale_fill_viridis(discrete = TRUE) +  
   labs(
     title = "Top 15 Most Frequent Peaks in Climbing Expeditions", 
@@ -56,6 +62,8 @@ ggplot(expeditions, aes(x = peak_name)) +
     y = "Number of Expeditions"
   ) + 
   coord_flip()  
+theme_light ()
+theme (legend.position = "bottom")
 
 ```
 
@@ -129,20 +137,19 @@ commute_aggregated <- commute_filtered %>%
   group_by(state, mode) %>%
   summarise(total_commutes = sum(n, na.rm = TRUE), .groups = "drop")
 
-# Pivot the data to wide format
-commute_wide <- commute_aggregated %>%
-  pivot_wider(names_from = mode, values_from = total_commutes, values_fill = list(total_commutes = 0))
 
 # Create the scatter plot
-ggplot(commute_wide, aes(x = Bike, y = Walk)) +
-  geom_point(size = 2, color = "blue") +             
+ggplot(commute_filtered, aes(x = Walk, y = Bike, color=state.region)) +
+  geom_point(size = 2) +             
   scale_x_log10(labels = comma_format()) +             
-  scale_y_log10(labels = comma_format()) +            
-  theme_light(base_size = 14) +                        
+  scale_y_log10(labels = comma_format()) + 
+  geom_text (aes(label = state_abb), hjust = 0.5, vjust = 0.5, size = 3, check_overlap = TRUE, color = "black")
+  theme_light() +                        
   labs(
     title = "Commutes by Bike and Walk in US Cities",   
     x = "Total Bike Commutes (log scale)",             
-    y = "Total Walk Commutes (log scale)"              
+    y = "Total Walk Commutes (log scale)"     
+    
   )
 
 
