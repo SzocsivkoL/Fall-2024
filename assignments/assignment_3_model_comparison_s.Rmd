@@ -231,20 +231,15 @@ http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity
 # Variance Inflation Factor (VIF)
 car::vif(model_filtered)
 
-data <- data %>%
-  mutate(cortisol_combined = (cortisol_serum + cortisol_saliva) / 2)
-  
-  model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_combined, data = data)
-summary(model_filtered)
-car::vif(model_filtered)
-
  ``` 
 ### Making decision based on model diagnostics
 
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
 
 ```{r}
-
+cor(data$cortisol_serum, data$cortisol_saliva)
+model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness +  cortisol_saliva, data = data_filtered)
+car::vif(model_filtered)
 ```
 
 #### Checking outliers of the updated model
