@@ -9,10 +9,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-install.packages("dplyr")
-library(dplyr)   
-library(tidyr)
-library(tidyverse)
+
 # Skills needed to solve this assignment
 
 -   Using R and RStudio, reading data
@@ -21,7 +18,13 @@ library(tidyverse)
 -   Data manipulation (e.g. dplyr, tidyr)
 -   String manipulation (e.g. stringr)
 
-```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
 ```
 
 # Background
@@ -112,6 +115,8 @@ rare_ingredients <- cocktailbar %>%
  pull(ingredients)                                   
 
 print(rare_ingredients)
+
+
 ```
 
 ## 8. Which cocktail has an ingredient that is only used in one cocktail?
