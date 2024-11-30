@@ -75,6 +75,7 @@ library (ggplot2)
 
 ```{r}
 # Define the URL
+
 url <- "https://github.com/elte-ppk-r-course/Fall-2024/raw/refs/heads/main/data/assignment_3_dataset_.xlsx"
 
 # Temporary file for the dataset
@@ -93,7 +94,6 @@ head(data)
 
 ## Data and model diagnostics 
 ### Data diagnostics
-#### Descriptives of the variables
 
 Run an exploratory data analysis (EDA) to investigate the dataset.
 
@@ -108,8 +108,9 @@ data %>%
   labs(title = "Histograms of Numeric Variables")
 str(data)
 summary(data)
-table(data$sex)
+data$sex <- as.factor(data$sex)
 colSums(is.na(data))
+str(data)
 
 data %>%
   pivot_longer(cols = where(is.numeric)) %>%  # Reshape the data to long format for numeric columns
@@ -121,7 +122,10 @@ data %>%
 
 
 ```
-
+#### Descriptives of the variables
+```{r}
+summary(data)
+```
 #### Correct coding errors
 
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
@@ -129,7 +133,8 @@ If you find values in the dataset during the EDA, that are not correct based on 
 ```{r}
 data <- data %>%
   mutate(sex = dplyr::recode(sex, "woman" = "female"))
-
+data <- data %>% filter (mindfulness<=6)
+data_filtered <- data %>% filter(pain != 50)
 
 ```
 
@@ -151,30 +156,17 @@ summary(model)
 Check for outlier values in the model.
 
 ```{r}
-# Cook's distance
-cooksd <- cooks.distance(model)
-plot(cooksd, type = "h", main = "Cook's Distance", col = "red")
-abline(h = 4/(nrow(data) - length(model$coefficients)), col = "blue")
 
-# Remove outliers if necessary
-influential <- as.numeric(names(cooksd)[(cooksd > (4/(nrow(data) - length(model$coefficients))))])
-data_clean <- data[-influential, ]
 
-plot(model, which = 5)  # Leverage plot in base R for linear model
-plot(model, which = 4) 
+# Calculate Cook's distance
+cooks_dist <- cooks.distance(model)
 
-model <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data)
-data_with_residuals <- data %>%
-  mutate(
-    cook_distance = cooks.distance(model)
-  )
-# Filter out the outlier in pain (pain == 50)
-data_filtered <- data %>% filter(pain != 50)
-
-# Fit the model without the outlier
+# Print the observations with Cook's distance > 1
+influential <- which(cooks_dist > 1)
+print(influential)
 
 model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
- 
+
 # Model summary
 summary(model_filtered)
 
@@ -186,9 +178,6 @@ summary(model_filtered)
 Check the normality assumption.
 
 ```{r}
-# Residual diagnostics
-qqnorm(residuals(model_filtered))
-qqline(residuals(model), col = "blue")
 
 # Shapiro-Wilk test
 shapiro.test(residuals(model_filtered))
@@ -196,15 +185,28 @@ shapiro.test(residuals(model_filtered))
 # Calculate the residuals from the model
 residuals_data <- residuals(model_filtered)
 
-# Quantile-quantile plot shows how far the residuals are from normal distribution
-qqplot_data <- qqnorm(residuals_data, plot.it = FALSE)
+residuals_df <- data.frame(residuals = residuals(model_filtered))
 
-# Find the points that are far from the line (deviating residuals)
-outlier_indices <- which(abs(qqplot_data$y) > 2)  # Set a threshold (e.g., abs > 2 standard deviations)
+# Q-Q plot using ggplot2
+ggplot(residuals_df, aes(sample = residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "blue") +
+  labs(
+    title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
 
-# Show the corresponding rows of the outliers
-outliers <- data[outlier_indices, ]
-print(outliers)
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Residuals",
+    x = "Residuals",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
 
 ```
 
@@ -254,13 +256,12 @@ data_filtered <- data_filtered %>%
 #### Checking outliers of the updated model
 
 ```{r}
-cooksd <- cooks.distance(model_filtered_updated)
-plot(cooksd, type = "h", main = "Cook's Distance", col = "red")
-abline(h = 4/(nrow(data) - length(model_filtered_updated$coefficients)), col = "blue")
+# Calculate Cook's distance
+cooks_dist <- cooks.distance(model_filtered)
 
-# Remove outliers if necessary
-influential <- as.numeric(names(cooksd)[(cooksd > (4/(nrow(data) - length(model_filtered_updated$coefficients))))])
-data_clean <- data[-influential, ]
+# Print the observations with Cook's distance > 1
+influential <- which(cooks_dist > 1)
+print(influential)
 ```
 
 #### Checking assumptions of the updated model
@@ -268,25 +269,31 @@ data_clean <- data[-influential, ]
 Normality assumption
 
 ```{r}
-# Residual diagnostics
-qqnorm(residuals(model_filtered_updated))
-qqline(residuals(model), col = "blue")
 
 # Shapiro-Wilk test
 shapiro.test(residuals(model_filtered_updated))
 
-# Calculate the residuals from the model
-residuals_data <- residuals(model_filtered_updated)
+residuals_df <- data.frame(residuals = residuals(model_filtered_updated))
 
-# Quantile-quantile plot shows how far the residuals are from normal distribution
-qqplot_data <- qqnorm(residuals_data, plot.it = FALSE)
+# Q-Q plot using ggplot2
+ggplot(residuals_df, aes(sample = residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "blue") +
+  labs(
+    title = "Q-Q Plot of Residuals",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
 
-# Find the points that are far from the line (deviating residuals)
-outlier_indices <- which(abs(qqplot_data$y) > 2)  # Set a threshold (e.g., abs > 2 standard deviations)
-
-# Show the corresponding rows of the outliers
-outliers <- data[outlier_indices, ]
-print(outliers)
+ggplot(residuals_df, aes(x = residuals)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Residuals",
+    x = "Residuals",
+    y = "Frequency"
+  ) +
+  theme_minimal()
 
 ```
 
@@ -332,6 +339,7 @@ Compare the two models.
 AIC(simple_model,model_filtered_updated)
 
 lrtest(simple_model, model_filtered_updated)
+anova (simple_model, model_filtered_updated)
 
 coefficients <- summary(model_filtered_updated)$coefficients
 equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
