@@ -58,15 +58,22 @@ In your discussion of the findings, briefly interpret the results of the above a
 
 Read the dataset used in this assignment. Pay attention to the extension of the datafile.
 
-```{r}
-# Install and load the required package
-install.packages("readxl")
 
-library(readxl)
-library(tidyr)
+# Install and load the required package
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
 library(dplyr)
-library(ggplot2)
-library(lmtest)
+library(tidyr)
+library(stringr)
+library(car)        
+library(lmtest)     
+library(MASS) 
+library (readxl)
+library (ggplot2)
+```
+
+```{r}
 # Define the URL
 url <- "https://github.com/elte-ppk-r-course/Fall-2024/raw/refs/heads/main/data/assignment_3_dataset_.xlsx"
 
@@ -92,7 +99,7 @@ Run an exploratory data analysis (EDA) to investigate the dataset.
 
 ```{r}
 data %>% 
-  select_if(is.numeric) %>%  # Select numeric columns
+  select_if(is.numeric) %>%  
   gather() %>%
   ggplot(aes(x=value)) + 
   geom_histogram(bins = 30, fill = "green", alpha = 0.7) +
@@ -121,7 +128,7 @@ If you find values in the dataset during the EDA, that are not correct based on 
 
 ```{r}
 data <- data %>%
-  mutate(sex = recode(sex, "woman" = "female"))
+  mutate(sex = dplyr::recode(sex, "woman" = "female"))
 
 
 ```
@@ -165,8 +172,9 @@ data_with_residuals <- data %>%
 data_filtered <- data %>% filter(pain != 50)
 
 # Fit the model without the outlier
-model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
 
+model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
+ 
 # Model summary
 summary(model_filtered)
 
@@ -230,22 +238,29 @@ http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity
 ```{r}
 # Variance Inflation Factor (VIF)
 car::vif(model_filtered)
+```
 
- ``` 
 ### Making decision based on model diagnostics
 
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
 
 ```{r}
-cor(data$cortisol_serum, data$cortisol_saliva)
-model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness +  cortisol_saliva, data = data_filtered)
-car::vif(model_filtered)
+model_filtered_updated <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness +  cortisol_saliva, data = data_filtered)
+data_filtered <- data_filtered %>%
+  mutate(sex = as.factor(sex))
+
 ```
 
 #### Checking outliers of the updated model
 
 ```{r}
+cooksd <- cooks.distance(model_filtered_updated)
+plot(cooksd, type = "h", main = "Cook's Distance", col = "red")
+abline(h = 4/(nrow(data) - length(model_filtered_updated$coefficients)), col = "blue")
 
+# Remove outliers if necessary
+influential <- as.numeric(names(cooksd)[(cooksd > (4/(nrow(data) - length(model_filtered_updated$coefficients))))])
+data_clean <- data[-influential, ]
 ```
 
 #### Checking assumptions of the updated model
@@ -253,25 +268,49 @@ car::vif(model_filtered)
 Normality assumption
 
 ```{r}
+# Residual diagnostics
+qqnorm(residuals(model_filtered_updated))
+qqline(residuals(model), col = "blue")
+
+# Shapiro-Wilk test
+shapiro.test(residuals(model_filtered_updated))
+
+# Calculate the residuals from the model
+residuals_data <- residuals(model_filtered_updated)
+
+# Quantile-quantile plot shows how far the residuals are from normal distribution
+qqplot_data <- qqnorm(residuals_data, plot.it = FALSE)
+
+# Find the points that are far from the line (deviating residuals)
+outlier_indices <- which(abs(qqplot_data$y) > 2)  # Set a threshold (e.g., abs > 2 standard deviations)
+
+# Show the corresponding rows of the outliers
+outliers <- data[outlier_indices, ]
+print(outliers)
 
 ```
 
 Linearity assumption
 
 ```{r}
-
+car::crPlots(model_filtered)
 ```
 
 Homoscedasticty assumption (homogeneity of variance)
 
 ```{r}
+plot(model_filtered$fitted.values, residuals(model_filtered), 
+     main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "red")
 
+# Breusch-Pagan test
+bptest(model_filtered)
 ```
 
 Multicollinearity assumption
 
 ```{r}
-
+car::vif(model_filtered_updated)
 ```
 
 ## Model comparison
@@ -279,18 +318,27 @@ Multicollinearity assumption
 Create the simple model and get the results of the model that needs to be reported based on the What to report section.
 
 ```{r}
+simple_model <- lm(pain ~ age + sex, data = data_filtered)
 
 ```
 
 Create the more complex model based on the results of the model diagnostics. Also, get the results that needs to be reported based on the What to report section.
-
 ```{r}
-
 ```
 
 Compare the two models.
 
 ```{r}
+AIC(simple_model,model_filtered_updated)
+
+lrtest(simple_model, model_filtered_updated)
+
+coefficients <- summary(model_filtered_updated)$coefficients
+equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
+                   paste(paste0(round(coefficients[-1, 1], 2), " * ", names(coefficients[-1, 1])),
+                         collapse = " + "))
+equation
 
 ```
+
 
