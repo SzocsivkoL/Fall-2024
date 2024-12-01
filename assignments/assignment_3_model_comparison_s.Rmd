@@ -1,6 +1,6 @@
 ---
 title: "Assignment 3: Model comparison"
-author: "Marton Kovacs"
+author: "Marton Kovacs"  
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -74,20 +74,14 @@ library (ggplot2)
 ```
 
 ```{r}
-# Define the URL
 
 url <- "https://github.com/elte-ppk-r-course/Fall-2024/raw/refs/heads/main/data/assignment_3_dataset_.xlsx"
 
-# Temporary file for the dataset
 temp_file <- tempfile(fileext = ".xlsx")
 
-# Download the dataset
 download.file(url, temp_file, mode = "wb")
 
-# Read the Excel file
 data <- read_excel(temp_file)
-
-# View the data
 head(data)
 
 ```
@@ -113,10 +107,11 @@ colSums(is.na(data))
 str(data)
 
 data %>%
-  pivot_longer(cols = where(is.numeric)) %>%  # Reshape the data to long format for numeric columns
+  pivot_longer(cols = where(is.numeric)) %>%  
   ggplot(aes(x = value)) +
   geom_boxplot() +
-  facet_wrap(~name, scales = "free") +  # Create a separate boxplot for each numeric variable
+  facet_wrap(~name, scales = "free") + 
+  
   coord_flip() +
   theme_minimal()
 
@@ -146,8 +141,6 @@ In order to test the more complex model for outliers and to test the assumptions
 ```{r}
 
 model <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data)
-
-# Model summary
 summary(model)
 ```
 
@@ -157,17 +150,13 @@ Check for outlier values in the model.
 
 ```{r}
 
-
-# Calculate Cook's distance
 cooks_dist <- cooks.distance(model)
 
-# Print the observations with Cook's distance > 1
 influential <- which(cooks_dist > 1)
 print(influential)
 
 model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
 
-# Model summary
 summary(model_filtered)
 
 
@@ -179,15 +168,13 @@ Check the normality assumption.
 
 ```{r}
 
-# Shapiro-Wilk test
 shapiro.test(residuals(model_filtered))
 
-# Calculate the residuals from the model
+
 residuals_data <- residuals(model_filtered)
 
 residuals_df <- data.frame(residuals = residuals(model_filtered))
 
-# Q-Q plot using ggplot2
 ggplot(residuals_df, aes(sample = residuals)) +
   stat_qq() +
   stat_qq_line(color = "blue") +
@@ -219,7 +206,7 @@ car::crPlots(model_filtered)
 Check the homoscedasticty assumption (homogeneity of variance).
 
 ```{r}
-# Residuals vs Fitted
+
 plot(model_filtered$fitted.values, residuals(model_filtered), 
      main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
 abline(h = 0, col = "red")
@@ -256,10 +243,9 @@ data_filtered <- data_filtered %>%
 #### Checking outliers of the updated model
 
 ```{r}
-# Calculate Cook's distance
-cooks_dist <- cooks.distance(model_filtered)
 
-# Print the observations with Cook's distance > 1
+cooks_dist <- cooks.distance(model_filtered_updated)
+
 influential <- which(cooks_dist > 1)
 print(influential)
 ```
@@ -270,12 +256,11 @@ Normality assumption
 
 ```{r}
 
-# Shapiro-Wilk test
 shapiro.test(residuals(model_filtered_updated))
 
 residuals_df <- data.frame(residuals = residuals(model_filtered_updated))
 
-# Q-Q plot using ggplot2
+
 ggplot(residuals_df, aes(sample = residuals)) +
   stat_qq() +
   stat_qq_line(color = "blue") +
@@ -300,17 +285,17 @@ ggplot(residuals_df, aes(x = residuals)) +
 Linearity assumption
 
 ```{r}
-car::crPlots(model_filtered)
+car::crPlots(model_filtered_updated)
 ```
 
 Homoscedasticty assumption (homogeneity of variance)
 
 ```{r}
-plot(model_filtered$fitted.values, residuals(model_filtered), 
+plot(model_filtered$fitted.values, residuals(model_filtered_updated), 
      main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
 abline(h = 0, col = "red")
 
-# Breusch-Pagan test
+
 bptest(model_filtered)
 ```
 
@@ -347,6 +332,5 @@ equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
                          collapse = " + "))
 equation
 
-```
 
 
