@@ -625,9 +625,9 @@ colSums(is.na(data))</code></pre>
 <h4>Correct coding errors</h4>
 <p>If you find values in the dataset during the EDA, that are not
 correct based on the provided descriptions of the variables of the
-dataset please correct them here.</p>
-<pre class="r"><code># sex variable has an error (woman vs female), so I recode woman to female
-data &lt;- data %&gt;%
+dataset please correct them here. # sex variable has an error (woman vs
+female), so I recode woman to female</p>
+<pre class="r"><code>data &lt;- data %&gt;%
   mutate(sex = dplyr::recode(sex, &quot;woman&quot; = &quot;female&quot;))
 #mindfulness has a value bigger than the range 
 data &lt;- data %&gt;% filter (mindfulness&lt;=6)

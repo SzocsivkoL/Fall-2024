@@ -126,9 +126,10 @@ summary(data)
 #### Correct coding errors
 
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
+# sex variable has an error (woman vs female), so I recode woman to female
 
 ```{r}
-# sex variable has an error (woman vs female), so I recode woman to female
+
 data <- data %>%
   mutate(sex = dplyr::recode(sex, "woman" = "female"))
 #mindfulness has a value bigger than the range 
