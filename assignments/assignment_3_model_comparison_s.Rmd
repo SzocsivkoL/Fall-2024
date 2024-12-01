@@ -340,4 +340,57 @@ equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
                          collapse = " + "))
 equation
 
+library(stargazer)
+
+# Regression table
+stargazer(
+  simple_model, model_filtered_updated,
+  type = "text", 
+  title = "Regression Results for Simple and Complex Models",
+  dep.var.labels = c("Pain"), 
+  covariate.labels = c("Age", "Sex (Male)", "STAI Trait", "Pain Catastrophizing", 
+                       "Mindfulness", "Cortisol Saliva"), 
+  star.cutoffs = c(0.05, 0.01, 0.001), 
+  notes = "Significance levels: *** p < 0.001, ** p < 0.01, * p < 0.05"
+)
+
+
+# coefficients and confidence intervals 
+coeff_simple <- summary(simple_model)$coefficients
+coeff_complex <- summary(model_filtered_updated)$coefficients
+confint_simple <- confint(simple_model)
+confint_complex <- confint(model_filtered_updated)
+
+
+simple_table <- data.frame(
+  Predictor = rownames(coeff_simple),
+  Unstd_B = round(coeff_simple[, 1], 3),
+  Std_Error = round(coeff_simple[, 2], 3),
+  CI_Lower = round(confint_simple[, 1], 3),
+  CI_Upper = round(confint_simple[, 2], 3),
+  p_Value = round(coeff_simple[, 4], 3)
+)
+
+
+complex_table <- data.frame(
+  Predictor = rownames(coeff_complex),
+  Unstd_B = round(coeff_complex[, 1], 3),
+  Std_Error = round(coeff_complex[, 2], 3),
+  CI_Lower = round(confint_complex[, 1], 3),
+  CI_Upper = round(confint_complex[, 2], 3),
+  p_Value = round(coeff_complex[, 4], 3)
+)
+
+
+cat("Simple Model Results:\n")
+knitr::kable(simple_table, caption = "Simple Model Regression Results")
+
+cat("\nComplex Model Results:\n")
+knitr::kable(complex_table, caption = "Complex Model Regression Results")
+
+#Simple Model:In the simple model, which includes only age and sex as predictors, the variable age is a statistically significant predictor of pain (β = -0.084, p < 0.001), suggesting a negative association with pain. 
+
+#Complex Model:The complex model includes additional predictors: STAI trait, pain catastrophizing, mindfulness, and cortisol saliva. In this model, age remains negative but is no longer statistically significant (β = -0.034, p = 0.151), suggesting that its predictive power diminishes when other variables are included.Pain catastrophizing (β = 0.083, p < 0.01) is a significant positive predictor of pain. Similarly, cortisol saliva (β = 0.543, p < 0.001) is a highly significant positive predictor. Other predictors are not significant in the complex model.
+#Discussion:The complex model incorporates additional predictors such as pain catastrophizing and cortisol saliva, which provide significant explanatory power. The negative relationship between age and pain becomes non-significant in this model, suggesting that the predictive influence of age is confounded by other factors. The complex model shows improved fit statistics (lower AIC, higher F-statistic), and the inclusion of significant predictors such as pain catastrophizing and cortisol saliva supports its superiority over the simple model.
+
 ```
