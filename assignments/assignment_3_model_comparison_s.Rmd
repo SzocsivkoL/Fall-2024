@@ -128,9 +128,12 @@ summary(data)
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
 
 ```{r}
+# sex variable has an error (woman vs female), so I recode woman to female
 data <- data %>%
   mutate(sex = dplyr::recode(sex, "woman" = "female"))
+#mindfulness has a value bigger than the range 
 data <- data %>% filter (mindfulness<=6)
+#pain seems to have a misspelled value 50 (instead of 5 I guess)
 data_filtered <- data %>% filter(pain != 50)
 
 ```
@@ -141,7 +144,6 @@ data_filtered <- data %>% filter(pain != 50)
 In order to test the more complex model for outliers and to test the assumptions first build the model.
 
 ```{r}
-
 model <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data)
 summary(model)
 ```
@@ -157,6 +159,8 @@ cooks_dist <- cooks.distance(model)
 influential <- which(cooks_dist > 1)
 print(influential)
 
+#pain doesn't seem to be influential, but I still will use the filtered data
+
 model_filtered <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_serum + cortisol_saliva, data = data_filtered)
 
 summary(model_filtered)
@@ -169,6 +173,7 @@ summary(model_filtered)
 Check the normality assumption.
 
 ```{r}
+#The assumption of normality is satisfied
 
 shapiro.test(residuals(model_filtered))
 
@@ -202,12 +207,14 @@ ggplot(residuals_df, aes(x = residuals)) +
 Check the linearity assumption.
 
 ```{r}
+#The assumption of linearity is satisfied
 car::crPlots(model_filtered)
 ```
 
 Check the homoscedasticty assumption (homogeneity of variance).
 
 ```{r}
+#The assumption of homoscedasticity is satisfied
 
 plot(model_filtered$fitted.values, residuals(model_filtered), 
      main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
@@ -227,7 +234,8 @@ https://statisticalhorizons.com/multicollinearity
 http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity-in-regression-analysis
 
 ```{r}
-# Variance Inflation Factor (VIF)
+#cortisol_saliva and cortisol_serum are correlated
+
 car::vif(model_filtered)
 ```
 
@@ -236,6 +244,7 @@ car::vif(model_filtered)
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
 
 ```{r}
+# I leave cortisol salive because it seems to be more precise as I read
 model_filtered_updated <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_saliva, data = data_filtered)
 ```
 
@@ -254,6 +263,7 @@ print(influential)
 Normality assumption
 
 ```{r}
+#The requirements of the assumptions above are met: 
 
 shapiro.test(residuals(model_filtered_updated))
 
@@ -321,8 +331,8 @@ Compare the two models.
 ```{r}
 AIC(simple_model,model_filtered_updated)
 
-lrtest(simple_model, model_filtered_updated)
-anova(simple_model, model_filtered_updated)
+lrtest(simple_model,model_filtered_updated)
+anova(simple_model,model_filtered_updated)
 
 coefficients <- summary(model_filtered_updated)$coefficients
 equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
