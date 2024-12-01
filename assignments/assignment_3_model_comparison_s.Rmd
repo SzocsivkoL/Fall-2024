@@ -85,7 +85,6 @@ download.file(url, temp_file, mode = "wb")
 
 data <- read_excel(temp_file)
 head(data)
-
 ```
 
 ## Data and model diagnostics 
@@ -126,10 +125,10 @@ summary(data)
 #### Correct coding errors
 
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
-# sex variable has an error (woman vs female), so I recode woman to female
+
 
 ```{r}
-
+# sex variable has an error (woman vs female), so I recode woman to female
 data <- data %>%
   mutate(sex = dplyr::recode(sex, "woman" = "female"))
 #mindfulness has a value bigger than the range 
@@ -340,3 +339,5 @@ equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
                    paste(paste0(round(coefficients[-1, 1], 2), " * ", names(coefficients[-1, 1])),
                          collapse = " + "))
 equation
+
+```
