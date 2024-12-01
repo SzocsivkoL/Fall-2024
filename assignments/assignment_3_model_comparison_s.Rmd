@@ -73,6 +73,8 @@ library (readxl)
 library (ggplot2)
 ```
 
+
+
 ```{r}
 
 url <- "https://github.com/elte-ppk-r-course/Fall-2024/raw/refs/heads/main/data/assignment_3_dataset_.xlsx"
@@ -234,10 +236,7 @@ car::vif(model_filtered)
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
 
 ```{r}
-model_filtered_updated <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness +  cortisol_saliva, data = data_filtered)
-data_filtered <- data_filtered %>%
-  mutate(sex = as.factor(sex))
-
+model_filtered_updated <- lm(pain ~ age + sex + STAI_trait + pain_cat + mindfulness + cortisol_saliva, data = data_filtered)
 ```
 
 #### Checking outliers of the updated model
@@ -291,12 +290,12 @@ car::crPlots(model_filtered_updated)
 Homoscedasticty assumption (homogeneity of variance)
 
 ```{r}
-plot(model_filtered$fitted.values, residuals(model_filtered_updated), 
+plot(model_filtered_updated$fitted.values, residuals(model_filtered_updated), 
      main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
 abline(h = 0, col = "red")
 
 
-bptest(model_filtered)
+bptest(model_filtered_updated)
 ```
 
 Multicollinearity assumption
@@ -315,8 +314,7 @@ simple_model <- lm(pain ~ age + sex, data = data_filtered)
 ```
 
 Create the more complex model based on the results of the model diagnostics. Also, get the results that needs to be reported based on the What to report section.
-```{r}
-```
+
 
 Compare the two models.
 
@@ -324,13 +322,10 @@ Compare the two models.
 AIC(simple_model,model_filtered_updated)
 
 lrtest(simple_model, model_filtered_updated)
-anova (simple_model, model_filtered_updated)
+anova(simple_model, model_filtered_updated)
 
 coefficients <- summary(model_filtered_updated)$coefficients
 equation <- paste0("Pain = ", round(coefficients[1, 1], 2), " + ",
                    paste(paste0(round(coefficients[-1, 1], 2), " * ", names(coefficients[-1, 1])),
                          collapse = " + "))
 equation
-
-
-
