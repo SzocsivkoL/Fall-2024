@@ -120,7 +120,7 @@ Notes:
 -   Both axis scales are log transformed and the labels comma formatted, using `scales::comma_format()`
 -   The point size is 2, . The theme is set to light.
 ```{r}
-# Load the dataset
+# Load the dataset.
 tuesday_data <- tt_load("2019-11-05")
 commute <- tuesday_data$commute
 
