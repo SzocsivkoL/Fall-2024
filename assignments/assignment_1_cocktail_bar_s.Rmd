@@ -9,7 +9,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-
 # Skills needed to solve this assignment
 
 -   Using R and RStudio, reading data

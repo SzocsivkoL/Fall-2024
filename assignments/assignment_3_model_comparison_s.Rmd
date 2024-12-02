@@ -3,7 +3,7 @@ title: "Assignment 3: Model comparison"
 author: "Marton Kovacs"  
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: console 
 ---
 
 In this lab assignment you are going to work with (simulated) data related to perioperative pain and its psychological and hormonal predictors. In the assignment you will assess the added benefit of including some psychological and hormonal predictors to the already established demographic predictors of pain.
